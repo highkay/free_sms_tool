@@ -36,6 +36,10 @@ class Settings:
     log_path: Path = Path("logs/free_sms_tool.log")
     log_json: bool = False
     collector_poll_seconds: int = 5
+    auto_replenish_enabled: bool = True
+    auto_replenish_consumption_threshold: float = 0.8
+    auto_replenish_sync_limit_per_provider: int = 30
+    auto_replenish_cooldown_seconds: int = 600
     web_ui_username: str = ""
     web_ui_password: str = ""
 
@@ -60,6 +64,16 @@ class Settings:
             log_path=Path(os.getenv("LOG_PATH", "logs/free_sms_tool.log")),
             log_json=_as_bool(os.getenv("LOG_JSON", "0")),
             collector_poll_seconds=max(1, int(os.getenv("COLLECTOR_POLL_SECONDS", "5"))),
+            auto_replenish_enabled=_as_bool(os.getenv("AUTO_REPLENISH_ENABLED", "1"), default=True),
+            auto_replenish_consumption_threshold=min(
+                1.0,
+                max(0.0, float(os.getenv("AUTO_REPLENISH_CONSUMPTION_THRESHOLD", "0.8"))),
+            ),
+            auto_replenish_sync_limit_per_provider=max(
+                1,
+                int(os.getenv("AUTO_REPLENISH_SYNC_LIMIT_PER_PROVIDER", "30")),
+            ),
+            auto_replenish_cooldown_seconds=max(1, int(os.getenv("AUTO_REPLENISH_COOLDOWN_SECONDS", "600"))),
             web_ui_username=os.getenv("WEB_UI_USERNAME", "").strip(),
             web_ui_password=os.getenv("WEB_UI_PASSWORD", "").strip(),
         )

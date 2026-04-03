@@ -581,6 +581,9 @@ Use when:
 - phase 1 providers: every 10-20 minutes
 - cookie-gated providers: every 20-60 minutes
 - disabled providers: only manual re-test
+- when default eligible inventory consumption crosses the configured low-watermark, the collector should queue one deeper sync automatically
+- when a specific app has zero eligible numbers left, user-facing pick / claim flows may queue one replenish sync as a fallback
+- auto replenish should reuse the normal sync job path, but must dedupe active jobs and respect a cooldown window
 
 ## 12.2 Detail refresh
 

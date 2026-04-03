@@ -5,7 +5,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.db.repository import Repository
-from app.web.deps import get_repository
+from app.services.jobs import JobService
+from app.web.deps import get_job_service, get_repository
 
 
 def register_claim_routes(templates: Jinja2Templates) -> APIRouter:
@@ -42,11 +43,16 @@ def register_claim_routes(templates: Jinja2Templates) -> APIRouter:
         )
 
     @router.post("")
-    async def create_claim(request: Request, repository: Repository = Depends(get_repository)) -> RedirectResponse:
+    async def create_claim(
+        request: Request,
+        repository: Repository = Depends(get_repository),
+        job_service: JobService = Depends(get_job_service),
+    ) -> RedirectResponse:
         form = await request.form()
+        app_slug = str(form.get("app_slug") or "").strip() or None
         try:
             repository.create_claim(
-                app_slug=str(form.get("app_slug") or "").strip() or None,
+                app_slug=app_slug,
                 app_name=str(form.get("app_name") or "").strip(),
                 country_name=str(form.get("country_name") or "").strip() or None,
                 provider_id=str(form.get("provider_id") or "").strip() or None,
@@ -55,6 +61,7 @@ def register_claim_routes(templates: Jinja2Templates) -> APIRouter:
                 ttl_minutes=int(form.get("ttl_minutes") or 0) or None,
             )
         except ValueError as exc:
+            job_service.maybe_enqueue_app_exhausted_replenish(app_slug)
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return RedirectResponse(url="/claims", status_code=303)
 

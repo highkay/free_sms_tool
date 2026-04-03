@@ -160,6 +160,7 @@ def list_numbers(
 @router.post("/numbers/pick", dependencies=[Depends(require_api_key)], tags=["numbers"])
 def pick_number(payload: NumberPickRequest, request: Request) -> dict | None:
     repository = _repo(request)
+    job_service = _job_service(request)
     filters = NumberSelectionFilters(
         country_name=payload.country_name,
         provider_id=payload.provider_id,
@@ -167,6 +168,8 @@ def pick_number(payload: NumberPickRequest, request: Request) -> dict | None:
         include_cooling=payload.include_cooling,
     )
     selection = repository.pick_number(filters=filters)
+    if not selection:
+        job_service.maybe_enqueue_app_exhausted_replenish(payload.app_slug)
     return _to_dict(selection) if selection else None
 
 
@@ -233,6 +236,7 @@ def list_claims(
 @router.post("/claims", dependencies=[Depends(require_api_key)], status_code=status.HTTP_201_CREATED, tags=["claims"])
 def create_claim(payload: ClaimCreateRequest, request: Request) -> dict:
     repository = _repo(request)
+    job_service = _job_service(request)
     try:
         claim = repository.create_claim(
             app_slug=payload.app_slug,
@@ -244,6 +248,7 @@ def create_claim(payload: ClaimCreateRequest, request: Request) -> dict:
             ttl_minutes=payload.ttl_minutes,
         )
     except ValueError as exc:
+        job_service.maybe_enqueue_app_exhausted_replenish(payload.app_slug)
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _to_dict(claim)
 

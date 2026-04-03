@@ -40,7 +40,7 @@
             <span class="label-text">备注</span>
             <input class="input input-bordered" type="text" name="notes" placeholder="例如 注册流程 / 登录验证 / 备用站点">
           </label>
-          <button class="btn btn-primary md:col-span-2 justify-self-start" type="submit">保存应用</button>
+          <button class="btn btn-primary md:col-span-2 justify-self-stretch sm:justify-self-start" type="submit">保存应用</button>
         </form>
       </div>
     </div>
@@ -74,37 +74,72 @@
       </div>
       <div class="text-sm text-base-content/60">共 {{ apps|length }} 个应用</div>
     </div>
-    <div class="overflow-x-auto px-2 py-2">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>应用标识</th>
-            <th>应用名称</th>
-            <th>号码数</th>
-            <th>已用数</th>
-            <th>阻塞数</th>
-            <th>活跃认领</th>
-            <th>备注</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for app in apps %}
-          <tr>
-            <td class="font-mono"><a class="link link-hover" href="/apps/{{ app.slug }}">{{ app.slug }}</a></td>
-            <td><a class="link link-hover font-medium" href="/apps/{{ app.slug }}">{{ app.name }}</a></td>
-            <td>{{ app.number_count }}</td>
-            <td>{{ app.used_count }}</td>
-            <td>{{ app.blocked_count }}</td>
-            <td>{{ app.active_claim_count }}</td>
-            <td class="text-sm text-base-content/70">{{ app.notes or "-" }}</td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="7" class="py-8 text-center text-base-content/60">当前还没有应用标签。</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="ui-mobile-cards space-y-3 p-4 lg:hidden">
+      {% for app in apps %}
+      <article class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm">
+        <div class="space-y-3">
+          <div>
+            <a class="link link-hover font-mono text-sm" href="/apps/{{ app.slug }}">{{ app.slug }}</a>
+            <div class="mt-1 font-medium">{{ app.name }}</div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div class="rounded-2xl bg-base-200/60 p-3">
+              <div class="text-base-content/60">号码数</div>
+              <div class="mt-1 font-medium">{{ app.number_count }}</div>
+            </div>
+            <div class="rounded-2xl bg-base-200/60 p-3">
+              <div class="text-base-content/60">活跃认领</div>
+              <div class="mt-1 font-medium">{{ app.active_claim_count }}</div>
+            </div>
+            <div class="rounded-2xl bg-base-200/60 p-3">
+              <div class="text-base-content/60">已用数</div>
+              <div class="mt-1 font-medium">{{ app.used_count }}</div>
+            </div>
+            <div class="rounded-2xl bg-base-200/60 p-3">
+              <div class="text-base-content/60">阻塞数</div>
+              <div class="mt-1 font-medium">{{ app.blocked_count }}</div>
+            </div>
+          </div>
+          <div class="text-sm text-base-content/70">{{ app.notes or "-" }}</div>
+        </div>
+      </article>
+      {% else %}
+      <div class="rounded-2xl bg-base-200/60 p-4 text-center text-base-content/60">当前还没有应用标签。</div>
+      {% endfor %}
+    </div>
+    <div class="hidden px-2 py-2 lg:block">
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>应用标识</th>
+              <th>应用名称</th>
+              <th>号码数</th>
+              <th>已用数</th>
+              <th>阻塞数</th>
+              <th>活跃认领</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for app in apps %}
+            <tr>
+              <td class="font-mono"><a class="link link-hover" href="/apps/{{ app.slug }}">{{ app.slug }}</a></td>
+              <td><a class="link link-hover font-medium" href="/apps/{{ app.slug }}">{{ app.name }}</a></td>
+              <td>{{ app.number_count }}</td>
+              <td>{{ app.used_count }}</td>
+              <td>{{ app.blocked_count }}</td>
+              <td>{{ app.active_claim_count }}</td>
+              <td class="text-sm text-base-content/70">{{ app.notes or "-" }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="py-8 text-center text-base-content/60">当前还没有应用标签。</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 </div>

@@ -21,6 +21,7 @@ from app.models import (
     NumberRow,
     NumberSelectionFilters,
     NumberSourceRow,
+    PoolInventory,
     ProviderConfigRow,
     ProviderRow,
     SelectedNumber,
@@ -171,7 +172,7 @@ class Repository:
             if "locked" not in str(exc).lower():
                 raise
 
-    def _claim_candidate_row_conn(self, conn, filters: NumberSelectionFilters) -> sqlite3.Row | None:
+    def _claim_candidate_filters(self, filters: NumberSelectionFilters) -> tuple[list[str], list[object]]:
         now_iso = _utc_now_iso()
         where_clauses = [
             "p.enabled = 1",
@@ -210,6 +211,28 @@ class Repository:
                 """
             )
             params.append(filters.app_slug)
+        return where_clauses, params
+
+    def _eligible_number_count_conn(self, conn, filters: NumberSelectionFilters) -> int:
+        where_clauses, params = self._claim_candidate_filters(filters)
+        row = conn.execute(
+            f"""
+            SELECT COUNT(*)
+            FROM (
+                SELECT n.id
+                FROM numbers n
+                JOIN number_sources ns ON ns.number_id = n.id
+                JOIN providers p ON p.id = ns.provider_id
+                WHERE {' AND '.join(where_clauses)}
+                GROUP BY n.id
+            ) eligible_numbers
+            """,
+            params,
+        ).fetchone()
+        return int(row[0] or 0) if row else 0
+
+    def _claim_candidate_row_conn(self, conn, filters: NumberSelectionFilters) -> sqlite3.Row | None:
+        where_clauses, params = self._claim_candidate_filters(filters)
         return conn.execute(
             f"""
             WITH ranked AS (
@@ -553,6 +576,35 @@ class Repository:
             recent_message_count=recent_message_count,
             app_count=app_count,
             active_claim_count=active_claim_count,
+        )
+
+    def count_eligible_numbers(self, filters: NumberSelectionFilters | None = None) -> int:
+        filters = filters or NumberSelectionFilters()
+        with self.database.connection() as conn:
+            self._try_expire_claims_conn(conn)
+            return self._eligible_number_count_conn(conn, filters)
+
+    def get_pool_inventory(self, include_cooling: bool = False) -> PoolInventory:
+        filters = NumberSelectionFilters(include_cooling=include_cooling)
+        with self.database.connection() as conn:
+            self._try_expire_claims_conn(conn)
+            total_numbers = conn.execute("SELECT COUNT(*) FROM numbers").fetchone()[0]
+            enabled_provider_count = conn.execute("SELECT COUNT(*) FROM providers WHERE enabled = 1").fetchone()[0]
+            active_claim_count = conn.execute(
+                f"SELECT COUNT(*) FROM claims WHERE status IN {CLAIM_BLOCKING_SQL} AND expires_at > ?",
+                (_utc_now_iso(),),
+            ).fetchone()[0]
+            eligible_numbers = self._eligible_number_count_conn(conn, filters)
+        if total_numbers <= 0:
+            consumption_ratio = 1.0 if enabled_provider_count > 0 else 0.0
+        else:
+            consumption_ratio = 1 - (eligible_numbers / total_numbers)
+        return PoolInventory(
+            total_numbers=total_numbers,
+            eligible_numbers=eligible_numbers,
+            active_claim_count=active_claim_count,
+            enabled_provider_count=enabled_provider_count,
+            consumption_ratio=consumption_ratio,
         )
 
     def list_numbers(self, filters: NumberSelectionFilters | None = None, limit: int = 100) -> list[NumberRow]:

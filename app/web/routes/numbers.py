@@ -6,7 +6,8 @@ from fastapi.templating import Jinja2Templates
 
 from app.db.repository import Repository
 from app.models import APP_STATE_STATUSES, NumberSelectionFilters
-from app.web.deps import get_repository
+from app.services.jobs import JobService
+from app.web.deps import get_job_service, get_repository
 
 
 def register_number_routes(templates: Jinja2Templates) -> APIRouter:
@@ -40,6 +41,7 @@ def register_number_routes(templates: Jinja2Templates) -> APIRouter:
         app_slug: str | None = Query(default=None),
         include_cooling: bool = Query(default=False),
         repository: Repository = Depends(get_repository),
+        job_service: JobService = Depends(get_job_service),
     ) -> HTMLResponse:
         filters = NumberSelectionFilters(
             country_name=country_name,
@@ -48,6 +50,8 @@ def register_number_routes(templates: Jinja2Templates) -> APIRouter:
             include_cooling=include_cooling,
         )
         selection = repository.pick_number(filters=filters)
+        if not selection:
+            job_service.maybe_enqueue_app_exhausted_replenish(app_slug)
         return templates.TemplateResponse(
             request=request,
             name="partials/selected_number.html",

@@ -53,18 +53,18 @@
             <span class="label-text">认领时长（分钟）</span>
             <input class="input input-bordered" type="number" min="1" max="120" name="ttl_minutes" placeholder="10">
           </label>
-          <label class="form-control">
+          <div class="form-control">
             <span class="label-text">放宽策略</span>
             <label class="label cursor-pointer justify-start gap-3 rounded-2xl border border-base-300 px-4 py-3">
               <input class="checkbox" type="checkbox" name="include_cooling">
               <span class="label-text">允许分配降级号码</span>
             </label>
-          </label>
+          </div>
           <label class="form-control md:col-span-2 xl:col-span-3">
             <span class="label-text">用途说明</span>
             <input class="input input-bordered" type="text" name="purpose" placeholder="例如 OpenAI 注册验证码">
           </label>
-          <button class="btn btn-primary md:col-span-2 xl:col-span-3 justify-self-start" type="submit">创建认领</button>
+          <button class="btn btn-primary md:col-span-2 xl:col-span-3 justify-self-stretch sm:justify-self-start" type="submit">创建认领</button>
         </form>
         <datalist id="claim-app-slugs">
           {% for app in apps %}
@@ -103,66 +103,114 @@
       </div>
       <div class="text-sm text-base-content/60">最近 {{ claims|length }} 条</div>
     </div>
-    <div class="overflow-x-auto px-2 py-2">
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th>认领令牌</th>
-            <th>应用</th>
-            <th>号码</th>
-            <th>状态</th>
-            <th>用途</th>
-            <th>过期时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for claim in claims %}
-          <tr>
-            <td class="font-mono text-xs">
-              <a class="link link-hover" href="/claims/{{ claim.claim_token }}">{{ claim.claim_token }}</a>
-            </td>
-            <td>
-              <div>{{ claim.app_name or "-" }}</div>
-              <div class="text-xs text-base-content/60">{{ claim.app_slug or "-" }}</div>
-            </td>
-            <td>
-              <a class="link link-hover font-mono" href="/numbers/{{ claim.number_id }}">{{ claim.e164 }}</a>
-              <div class="text-xs text-base-content/60">{{ claim.country_name or "-" }}</div>
-            </td>
-            <td>
-              <span class="badge {% if claim.status in ['watching', 'claimed'] %}badge-info{% elif claim.status == 'completed' %}badge-success{% elif claim.status == 'blocked' %}badge-warning{% else %}badge-ghost{% endif %}">
-                {{ claim.status }}
-              </span>
-            </td>
-            <td>{{ claim.purpose or "-" }}</td>
-            <td class="text-xs">{{ claim.expires_at }}</td>
-            <td>
-              <div class="flex flex-wrap gap-2">
-                <form method="post" action="/claims/{{ claim.claim_token }}/release">
-                  <input type="hidden" name="result" value="released from web">
-                  <button class="btn btn-xs btn-outline" type="submit">释放</button>
-                </form>
-                <form method="post" action="/claims/{{ claim.claim_token }}/complete">
-                  <input type="hidden" name="result" value="success from web">
-                  <input type="hidden" name="app_state" value="success">
-                  <button class="btn btn-xs btn-primary" type="submit">标记成功</button>
-                </form>
-                <form method="post" action="/claims/{{ claim.claim_token }}/complete">
-                  <input type="hidden" name="result" value="blocked from web">
-                  <input type="hidden" name="app_state" value="blocked">
-                  <button class="btn btn-xs btn-warning" type="submit">标记阻塞</button>
-                </form>
-              </div>
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="7" class="py-8 text-center text-base-content/60">当前还没有认领记录。</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="ui-mobile-cards space-y-3 p-4 lg:hidden">
+      {% for claim in claims %}
+      <article class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm">
+        <div class="space-y-3">
+          <div class="space-y-1">
+            <a class="link link-hover break-all font-mono text-sm" href="/claims/{{ claim.claim_token }}">{{ claim.claim_token }}</a>
+            <div class="text-sm text-base-content/60">{{ claim.app_name or "-" }} · {{ claim.app_slug or "-" }}</div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge {% if claim.status in ['watching', 'claimed'] %}badge-info{% elif claim.status == 'completed' %}badge-success{% elif claim.status == 'blocked' %}badge-warning{% else %}badge-ghost{% endif %}">
+              {{ claim.status }}
+            </span>
+            <span class="badge badge-outline font-mono">{{ claim.e164 }}</span>
+          </div>
+          <dl class="space-y-2 text-sm">
+            <div class="space-y-1">
+              <dt class="text-base-content/60">用途</dt>
+              <dd class="break-words">{{ claim.purpose or "-" }}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3">
+              <dt class="text-base-content/60">过期时间</dt>
+              <dd class="text-right text-xs">{{ claim.expires_at }}</dd>
+            </div>
+          </dl>
+          <div class="ui-actions">
+            <form class="ui-action-form" method="post" action="/claims/{{ claim.claim_token }}/release">
+              <input type="hidden" name="result" value="released from web">
+              <button class="btn btn-sm btn-outline" type="submit">释放</button>
+            </form>
+            <form class="ui-action-form" method="post" action="/claims/{{ claim.claim_token }}/complete">
+              <input type="hidden" name="result" value="success from web">
+              <input type="hidden" name="app_state" value="success">
+              <button class="btn btn-sm btn-primary" type="submit">标记成功</button>
+            </form>
+            <form class="ui-action-form" method="post" action="/claims/{{ claim.claim_token }}/complete">
+              <input type="hidden" name="result" value="blocked from web">
+              <input type="hidden" name="app_state" value="blocked">
+              <button class="btn btn-sm btn-warning" type="submit">标记阻塞</button>
+            </form>
+          </div>
+        </div>
+      </article>
+      {% else %}
+      <div class="rounded-2xl bg-base-200/60 p-4 text-center text-base-content/60">当前还没有认领记录。</div>
+      {% endfor %}
+    </div>
+    <div class="hidden px-2 py-2 lg:block">
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>认领令牌</th>
+              <th>应用</th>
+              <th>号码</th>
+              <th>状态</th>
+              <th>用途</th>
+              <th>过期时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for claim in claims %}
+            <tr>
+              <td class="font-mono text-xs">
+                <a class="link link-hover" href="/claims/{{ claim.claim_token }}">{{ claim.claim_token }}</a>
+              </td>
+              <td>
+                <div>{{ claim.app_name or "-" }}</div>
+                <div class="text-xs text-base-content/60">{{ claim.app_slug or "-" }}</div>
+              </td>
+              <td>
+                <a class="link link-hover font-mono" href="/numbers/{{ claim.number_id }}">{{ claim.e164 }}</a>
+                <div class="text-xs text-base-content/60">{{ claim.country_name or "-" }}</div>
+              </td>
+              <td>
+                <span class="badge {% if claim.status in ['watching', 'claimed'] %}badge-info{% elif claim.status == 'completed' %}badge-success{% elif claim.status == 'blocked' %}badge-warning{% else %}badge-ghost{% endif %}">
+                  {{ claim.status }}
+                </span>
+              </td>
+              <td>{{ claim.purpose or "-" }}</td>
+              <td class="text-xs">{{ claim.expires_at }}</td>
+              <td>
+                <div class="ui-actions">
+                  <form class="ui-action-form" method="post" action="/claims/{{ claim.claim_token }}/release">
+                    <input type="hidden" name="result" value="released from web">
+                    <button class="btn btn-xs btn-outline" type="submit">释放</button>
+                  </form>
+                  <form class="ui-action-form" method="post" action="/claims/{{ claim.claim_token }}/complete">
+                    <input type="hidden" name="result" value="success from web">
+                    <input type="hidden" name="app_state" value="success">
+                    <button class="btn btn-xs btn-primary" type="submit">标记成功</button>
+                  </form>
+                  <form class="ui-action-form" method="post" action="/claims/{{ claim.claim_token }}/complete">
+                    <input type="hidden" name="result" value="blocked from web">
+                    <input type="hidden" name="app_state" value="blocked">
+                    <button class="btn btn-xs btn-warning" type="submit">标记阻塞</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="py-8 text-center text-base-content/60">当前还没有认领记录。</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 </div>

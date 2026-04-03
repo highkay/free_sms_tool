@@ -79,6 +79,12 @@ Queue one job that syncs all enabled providers.
 
 List recent queued, running, completed, or failed jobs.
 
+`payload_json` now also records sync metadata such as:
+
+- `reason`: `manual`, `auto_replenish_low_watermark`, or `auto_replenish_app_exhausted`
+- `limit_per_provider`: deeper auto-replenish discovery limit when present
+- `app_slug`: the app that triggered an exhaustion-driven replenish when present
+
 ## 3. Apps
 
 ### `GET /api/apps`
@@ -120,6 +126,8 @@ Pick one eligible number.
   "include_cooling": false
 }
 ```
+
+If `app_slug` is provided and that app has exhausted all currently eligible numbers, the API still returns `null` for this request but also asks the collector to auto-queue one replenish sync job.
 
 ### `GET /api/numbers/{number_id}`
 
@@ -177,6 +185,8 @@ Create a short-lived number claim.
 }
 ```
 
+If the claim cannot be created because the target app has no eligible numbers left, the API still returns `400`, but also asks the collector to auto-queue one replenish sync job.
+
 ### `GET /api/claims/{claim_token}`
 
 Return claim detail plus recent messages on the claimed number.
@@ -193,9 +203,7 @@ Release a claim and typically return app state to `available`.
 
 Complete a claim and usually mark app state to `success`.
 
-### `POST /api/claims/{claim_token}/block`
-
-Complete a claim and usually mark app state to `blocked`.
+Pass `app_state: "blocked"` in the request body when the claim should finish as blocked instead of successful.
 
 ## 6. OpenAPI
 

@@ -11,7 +11,7 @@
           这里管理所有接码站点的启用状态、优先级、User-Agent、Headers、Cookies 和 Tokens，并可单独测试同步。
         </p>
       </div>
-      <div class="flex flex-wrap gap-2">
+      <div class="ui-actions">
         <button
           class="btn btn-primary btn-sm"
           hx-post="/sync/run"
@@ -67,7 +67,7 @@
               <span class="badge badge-outline">认证 {{ provider.auth_mode }}</span>
               <span class="badge badge-outline">优先级 {{ provider.priority }}</span>
             </div>
-            <div class="text-xs text-base-content/60">
+            <div class="break-all text-xs text-base-content/60">
               最近验证：{{ provider.last_verified_at or "-" }} · 结果：{{ provider.last_verify_status or "-" }} · 错误：{{ provider.last_verify_error or "-" }}
             </div>
           </div>
@@ -76,7 +76,7 @@
       </summary>
 
       <div class="border-t border-base-300/70 px-6 pb-6 pt-5">
-        <div class="mb-5 flex flex-wrap gap-2">
+        <div class="ui-actions mb-5">
           <a class="btn btn-sm btn-ghost" href="{{ provider.homepage_url }}" target="_blank" rel="noreferrer">打开站点</a>
           <button
             class="btn btn-sm btn-secondary"
@@ -95,13 +95,13 @@
               <p class="text-sm text-base-content/60">控制站点是否参与同步与分配，以及当前的请求身份。</p>
             </div>
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <label class="form-control">
+              <div class="form-control">
                 <span class="label-text">启用状态</span>
                 <label class="label cursor-pointer justify-start gap-3 rounded-2xl border border-base-300 px-4 py-3">
                   <input class="checkbox" type="checkbox" name="enabled" {% if provider.enabled %}checked{% endif %}>
                   <span class="label-text">参与同步与分配</span>
                 </label>
-              </label>
+              </div>
               <label class="form-control">
                 <span class="label-text">优先级</span>
                 <input class="input input-bordered" type="number" name="priority" value="{{ provider.priority }}">

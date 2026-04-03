@@ -43,47 +43,92 @@
       </div>
       <div class="text-sm text-base-content/60">共 {{ number_usage|length }} 条记录</div>
     </div>
-    <div class="overflow-x-auto px-2 py-2">
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th>号码</th>
-            <th>国家 / 地区</th>
-            <th>应用状态</th>
-            <th>全局状态</th>
-            <th>活跃层级</th>
-            <th>最近短信年龄</th>
-            <th>使用次数</th>
-            <th>最近结果</th>
-            <th>最近认领</th>
-            <th>最近使用</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in number_usage %}
-          <tr>
-            <td class="font-mono"><a class="link link-hover" href="/numbers/{{ row.number_id }}">{{ row.e164 }}</a></td>
-            <td>{{ row.country_name or "-" }}</td>
-            <td><span class="badge">{{ row.app_status }}</span></td>
-            <td><span class="badge badge-outline">{{ row.number_status }}</span></td>
-            <td>
-              <span class="badge {% if row.freshness_bucket == 'hot' %}badge-success{% elif row.freshness_bucket == 'warm' %}badge-info{% elif row.freshness_bucket == 'cooling' %}badge-warning{% else %}badge-ghost{% endif %}">
-                {{ row.freshness_bucket or "-" }}
-              </span>
-            </td>
-            <td>{{ row.last_message_age_min if row.last_message_age_min is not none else "-" }}{% if row.last_message_age_min is not none %} 分钟{% endif %}</td>
-            <td>{{ row.use_count }}</td>
-            <td>{{ row.last_result or "-" }}</td>
-            <td class="text-xs">{{ row.last_claimed_at or "-" }}</td>
-            <td class="text-xs">{{ row.last_used_at or "-" }}</td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="10" class="py-8 text-center text-base-content/60">当前这个应用还没有号码状态记录。</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="ui-mobile-cards space-y-3 p-4 xl:hidden">
+      {% for row in number_usage %}
+      <article class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm">
+        <div class="space-y-3">
+          <div>
+            <a class="link link-hover font-mono text-sm" href="/numbers/{{ row.number_id }}">{{ row.e164 }}</a>
+            <div class="mt-1 text-sm text-base-content/60">{{ row.country_name or "-" }}</div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge">{{ row.app_status }}</span>
+            <span class="badge badge-outline">{{ row.number_status }}</span>
+            <span class="badge {% if row.freshness_bucket == 'hot' %}badge-success{% elif row.freshness_bucket == 'warm' %}badge-info{% elif row.freshness_bucket == 'cooling' %}badge-warning{% else %}badge-ghost{% endif %}">
+              {{ row.freshness_bucket or "-" }}
+            </span>
+          </div>
+          <dl class="space-y-2 text-sm">
+            <div class="flex items-start justify-between gap-3">
+              <dt class="text-base-content/60">最近短信年龄</dt>
+              <dd class="text-right">{{ row.last_message_age_min if row.last_message_age_min is not none else "-" }}{% if row.last_message_age_min is not none %} 分钟{% endif %}</dd>
+            </div>
+            <div class="flex items-start justify-between gap-3">
+              <dt class="text-base-content/60">使用次数</dt>
+              <dd class="text-right">{{ row.use_count }}</dd>
+            </div>
+            <div class="space-y-1">
+              <dt class="text-base-content/60">最近结果</dt>
+              <dd class="break-words">{{ row.last_result or "-" }}</dd>
+            </div>
+            <div class="space-y-1">
+              <dt class="text-base-content/60">最近认领</dt>
+              <dd class="break-all text-xs">{{ row.last_claimed_at or "-" }}</dd>
+            </div>
+            <div class="space-y-1">
+              <dt class="text-base-content/60">最近使用</dt>
+              <dd class="break-all text-xs">{{ row.last_used_at or "-" }}</dd>
+            </div>
+          </dl>
+        </div>
+      </article>
+      {% else %}
+      <div class="rounded-2xl bg-base-200/60 p-4 text-center text-base-content/60">当前这个应用还没有号码状态记录。</div>
+      {% endfor %}
+    </div>
+    <div class="hidden px-2 py-2 xl:block">
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>号码</th>
+              <th>国家 / 地区</th>
+              <th>应用状态</th>
+              <th>全局状态</th>
+              <th>活跃层级</th>
+              <th>最近短信年龄</th>
+              <th>使用次数</th>
+              <th>最近结果</th>
+              <th>最近认领</th>
+              <th>最近使用</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in number_usage %}
+            <tr>
+              <td class="font-mono"><a class="link link-hover" href="/numbers/{{ row.number_id }}">{{ row.e164 }}</a></td>
+              <td>{{ row.country_name or "-" }}</td>
+              <td><span class="badge">{{ row.app_status }}</span></td>
+              <td><span class="badge badge-outline">{{ row.number_status }}</span></td>
+              <td>
+                <span class="badge {% if row.freshness_bucket == 'hot' %}badge-success{% elif row.freshness_bucket == 'warm' %}badge-info{% elif row.freshness_bucket == 'cooling' %}badge-warning{% else %}badge-ghost{% endif %}">
+                  {{ row.freshness_bucket or "-" }}
+                </span>
+              </td>
+              <td>{{ row.last_message_age_min if row.last_message_age_min is not none else "-" }}{% if row.last_message_age_min is not none %} 分钟{% endif %}</td>
+              <td>{{ row.use_count }}</td>
+              <td>{{ row.last_result or "-" }}</td>
+              <td class="text-xs">{{ row.last_claimed_at or "-" }}</td>
+              <td class="text-xs">{{ row.last_used_at or "-" }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="10" class="py-8 text-center text-base-content/60">当前这个应用还没有号码状态记录。</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 </div>

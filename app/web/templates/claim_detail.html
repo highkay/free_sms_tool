@@ -21,24 +21,24 @@
   </section>
 
   <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="stat min-w-0 rounded-3xl border border-base-300 bg-base-100 shadow-sm">
       <div class="stat-title">应用</div>
-      <div class="stat-value text-lg">{{ claim.app_name or "-" }}</div>
+      <div class="stat-value break-words text-base sm:text-lg">{{ claim.app_name or "-" }}</div>
       <div class="stat-desc">{{ claim.app_slug or "-" }}</div>
     </div>
-    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="stat min-w-0 rounded-3xl border border-base-300 bg-base-100 shadow-sm">
       <div class="stat-title">号码</div>
-      <div class="stat-value text-lg font-mono">{{ claim.e164 }}</div>
+      <div class="stat-value break-all font-mono text-base sm:text-lg">{{ claim.e164 }}</div>
       <div class="stat-desc">{{ claim.country_name or "-" }}</div>
     </div>
-    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="stat min-w-0 rounded-3xl border border-base-300 bg-base-100 shadow-sm">
       <div class="stat-title">创建时间</div>
-      <div class="stat-value text-lg">{{ claim.created_at or "-" }}</div>
+      <div class="stat-value break-all text-sm sm:text-lg">{{ claim.created_at or "-" }}</div>
       <div class="stat-desc">用途：{{ claim.purpose or "-" }}</div>
     </div>
-    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="stat min-w-0 rounded-3xl border border-base-300 bg-base-100 shadow-sm">
       <div class="stat-title">过期时间</div>
-      <div class="stat-value text-lg">{{ claim.expires_at or "-" }}</div>
+      <div class="stat-value break-all text-sm sm:text-lg">{{ claim.expires_at or "-" }}</div>
       <div class="stat-desc">号码详情见下方操作</div>
     </div>
   </section>
@@ -48,18 +48,18 @@
       <h2 class="text-xl font-semibold">认领操作</h2>
       <p class="mt-1 text-sm text-base-content/60">流程结束后，记得立即回写最终结果。</p>
     </div>
-    <div class="flex flex-wrap gap-3 p-6">
+    <div class="ui-actions p-6">
       <a class="btn btn-sm btn-ghost" href="/numbers/{{ claim.number_id }}">查看号码详情</a>
-      <form method="post" action="/claims/{{ claim.claim_token }}/release">
+      <form class="ui-action-form" method="post" action="/claims/{{ claim.claim_token }}/release">
         <input type="hidden" name="result" value="released from claim detail">
         <button class="btn btn-sm btn-outline" type="submit">释放认领</button>
       </form>
-      <form method="post" action="/claims/{{ claim.claim_token }}/complete">
+      <form class="ui-action-form" method="post" action="/claims/{{ claim.claim_token }}/complete">
         <input type="hidden" name="result" value="success from claim detail">
         <input type="hidden" name="app_state" value="success">
         <button class="btn btn-sm btn-primary" type="submit">标记成功</button>
       </form>
-      <form method="post" action="/claims/{{ claim.claim_token }}/complete">
+      <form class="ui-action-form" method="post" action="/claims/{{ claim.claim_token }}/complete">
         <input type="hidden" name="result" value="blocked from claim detail">
         <input type="hidden" name="app_state" value="blocked">
         <button class="btn btn-sm btn-warning" type="submit">标记阻塞</button>

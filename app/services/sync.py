@@ -581,24 +581,29 @@ class SyncService:
         self.database = database
         self.settings = settings
 
-    def sync_enabled_providers(self, provider_id: str | None = None) -> list[SyncResult]:
+    def sync_enabled_providers(
+        self,
+        provider_id: str | None = None,
+        limit_per_provider: int | None = None,
+    ) -> list[SyncResult]:
         results: list[SyncResult] = []
         for current_provider_id in _provider_ids_to_sync(self.database, provider_id):
-            results.append(self.sync_provider(current_provider_id))
+            results.append(self.sync_provider(current_provider_id, limit_per_provider=limit_per_provider))
         return results
 
-    def sync_provider(self, provider_id: str) -> SyncResult:
+    def sync_provider(self, provider_id: str, limit_per_provider: int | None = None) -> SyncResult:
         synced_count = 0
         message_count = 0
         entries: list[dict[str, Any]] = []
         run_id = _start_fetch_run(self.database, provider_id)
         try:
             runtime = _load_provider_runtime(self.database, provider_id)
+            sync_limit = max(1, int(limit_per_provider or self.settings.sync_limit_per_provider))
             entries = _discover_entries(
                 provider_id,
                 self.settings,
                 runtime,
-                self.settings.sync_limit_per_provider,
+                sync_limit,
             )
             with self.database.connection() as conn:
                 for entry in entries:

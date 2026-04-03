@@ -49,9 +49,9 @@
             <span class="label-text">应用标识</span>
             <input class="input input-bordered" list="app-slugs" type="text" name="app_slug" placeholder="例如 openai" value="{{ filters.app_slug or '' }}">
           </label>
-          <div class="flex items-end gap-2">
-            <button class="btn btn-primary w-full" type="submit">应用筛选</button>
-            <a class="btn btn-ghost" href="/numbers">重置</a>
+          <div class="flex flex-col justify-end gap-2 md:col-span-2 sm:flex-row xl:col-span-1">
+            <button class="btn btn-primary w-full sm:flex-1 xl:flex-none" type="submit">应用筛选</button>
+            <a class="btn btn-ghost w-full sm:w-auto" href="/numbers">重置</a>
           </div>
         </form>
         <datalist id="app-slugs">
@@ -77,7 +77,7 @@
           </ul>
         </div>
         <button
-          class="btn btn-secondary"
+          class="btn btn-secondary w-full sm:w-auto"
           hx-get="/numbers/pick?country_name={{ filters.country_name or '' }}&provider_id={{ filters.provider_id or '' }}&app_slug={{ filters.app_slug or '' }}"
           hx-target="#selection-result"
           hx-swap="innerHTML"
@@ -97,52 +97,92 @@
       </div>
       <div class="text-sm text-base-content/60">当前共 {{ numbers|length }} 条结果</div>
     </div>
-    <div class="overflow-x-auto px-2 py-2">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>号码</th>
-            <th>国家 / 地区</th>
-            <th>状态</th>
-            <th>活跃层级</th>
-            <th>最近短信年龄</th>
-            <th>活跃分</th>
-            <th>来源站点</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for number in numbers %}
-          <tr>
-            <td>
+    <div class="ui-mobile-cards space-y-3 p-4 lg:hidden">
+      {% for number in numbers %}
+      <article class="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm">
+        <div class="space-y-3">
+          <div class="flex items-start justify-between gap-3">
+            <div>
               <a class="link link-hover font-mono text-base font-medium" href="/numbers/{{ number.id }}">{{ number.e164 }}</a>
-            </td>
-            <td>{{ number.country_name or '-' }}</td>
-            <td>
-              <div class="flex flex-wrap gap-2">
-                <span class="badge {% if number.status == 'active' %}badge-success{% elif number.status == 'blacklisted' %}badge-error{% else %}badge-ghost{% endif %}">{{ number.status }}</span>
-                {% if number.blacklist_reason %}
-                <span class="badge badge-error badge-outline">全局黑名单</span>
-                {% endif %}
-              </div>
-            </td>
-            <td>
-              <span class="badge {% if number.freshness_bucket == 'hot' %}badge-success{% elif number.freshness_bucket == 'warm' %}badge-info{% elif number.freshness_bucket == 'cooling' %}badge-warning{% else %}badge-ghost{% endif %}">
-                {{ number.freshness_bucket or '-' }}
-              </span>
-            </td>
-            <td>{{ number.last_message_age_min if number.last_message_age_min is not none else '-' }}{% if number.last_message_age_min is not none %} 分钟{% endif %}</td>
-            <td>{{ "%.1f"|format(number.activity_score) }}</td>
-            <td class="text-sm text-base-content/70">{{ number.providers or '-' }}</td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="7" class="py-10 text-center text-base-content/60">
-              当前还没有导入号码数据，请先到“来源站点”页面完成配置并执行同步。
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+              <div class="mt-1 text-sm text-base-content/60">{{ number.country_name or '-' }}</div>
+            </div>
+            <div class="text-right text-sm font-medium">{{ "%.1f"|format(number.activity_score) }}</div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="badge {% if number.status == 'active' %}badge-success{% elif number.status == 'blacklisted' %}badge-error{% else %}badge-ghost{% endif %}">{{ number.status }}</span>
+            <span class="badge {% if number.freshness_bucket == 'hot' %}badge-success{% elif number.freshness_bucket == 'warm' %}badge-info{% elif number.freshness_bucket == 'cooling' %}badge-warning{% else %}badge-ghost{% endif %}">
+              {{ number.freshness_bucket or '-' }}
+            </span>
+            {% if number.blacklist_reason %}
+            <span class="badge badge-error badge-outline">全局黑名单</span>
+            {% endif %}
+          </div>
+          <dl class="space-y-2 text-sm">
+            <div class="flex items-start justify-between gap-3">
+              <dt class="text-base-content/60">最近短信年龄</dt>
+              <dd class="text-right">{{ number.last_message_age_min if number.last_message_age_min is not none else '-' }}{% if number.last_message_age_min is not none %} 分钟{% endif %}</dd>
+            </div>
+            <div class="space-y-1">
+              <dt class="text-base-content/60">来源站点</dt>
+              <dd class="break-words text-base-content/70">{{ number.providers or '-' }}</dd>
+            </div>
+          </dl>
+        </div>
+      </article>
+      {% else %}
+      <div class="rounded-2xl bg-base-200/60 p-4 text-center text-base-content/60">
+        当前还没有导入号码数据，请先到“来源站点”页面完成配置并执行同步。
+      </div>
+      {% endfor %}
+    </div>
+    <div class="hidden px-2 py-2 lg:block">
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>号码</th>
+              <th>国家 / 地区</th>
+              <th>状态</th>
+              <th>活跃层级</th>
+              <th>最近短信年龄</th>
+              <th>活跃分</th>
+              <th>来源站点</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for number in numbers %}
+            <tr>
+              <td>
+                <a class="link link-hover font-mono text-base font-medium" href="/numbers/{{ number.id }}">{{ number.e164 }}</a>
+              </td>
+              <td>{{ number.country_name or '-' }}</td>
+              <td>
+                <div class="flex flex-wrap gap-2">
+                  <span class="badge {% if number.status == 'active' %}badge-success{% elif number.status == 'blacklisted' %}badge-error{% else %}badge-ghost{% endif %}">{{ number.status }}</span>
+                  {% if number.blacklist_reason %}
+                  <span class="badge badge-error badge-outline">全局黑名单</span>
+                  {% endif %}
+                </div>
+              </td>
+              <td>
+                <span class="badge {% if number.freshness_bucket == 'hot' %}badge-success{% elif number.freshness_bucket == 'warm' %}badge-info{% elif number.freshness_bucket == 'cooling' %}badge-warning{% else %}badge-ghost{% endif %}">
+                  {{ number.freshness_bucket or '-' }}
+                </span>
+              </td>
+              <td>{{ number.last_message_age_min if number.last_message_age_min is not none else '-' }}{% if number.last_message_age_min is not none %} 分钟{% endif %}</td>
+              <td>{{ "%.1f"|format(number.activity_score) }}</td>
+              <td class="text-sm text-base-content/70">{{ number.providers or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="py-10 text-center text-base-content/60">
+                当前还没有导入号码数据，请先到“来源站点”页面完成配置并执行同步。
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 </div>

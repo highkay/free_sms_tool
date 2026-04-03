@@ -13,6 +13,77 @@
           radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 24rem),
           radial-gradient(circle at top right, rgba(14, 165, 233, 0.06), transparent 20rem);
       }
+
+      .badge {
+        align-items: center;
+        height: auto;
+        min-height: 1.5rem;
+        padding-bottom: 0.2rem;
+        padding-top: 0.2rem;
+        text-align: center;
+        white-space: normal;
+      }
+
+      .stat-value {
+        height: auto;
+        line-height: 1.1;
+        min-height: 0;
+        overflow-wrap: anywhere;
+        padding-bottom: 0.125rem;
+      }
+
+      .table :where(th, td) {
+        vertical-align: top;
+        white-space: normal;
+      }
+
+      .stat {
+        min-width: 0;
+        width: 100%;
+      }
+
+      .btn {
+        height: auto;
+        line-height: 1.2;
+        min-height: 2.75rem;
+      }
+
+      .btn.btn-sm {
+        min-height: 2.25rem;
+      }
+
+      .btn.btn-xs {
+        min-height: 1.75rem;
+      }
+
+      code,
+      .font-mono {
+        overflow-wrap: anywhere;
+      }
+
+      .ui-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+
+      .ui-action-form {
+        margin: 0;
+      }
+
+      @media (max-width: 640px) {
+        .ui-actions {
+          flex-direction: column;
+        }
+
+        .ui-actions > * {
+          width: 100%;
+        }
+
+        .ui-actions .btn {
+          width: 100%;
+        }
+      }
     </style>
   </head>
   <body class="min-h-screen bg-base-200 text-base-content">

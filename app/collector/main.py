@@ -46,8 +46,18 @@ def main() -> None:
     logger.info("collector_started worker_id={} poll_seconds={}", worker_id, settings.collector_poll_seconds)
     while True:
         processed = run_once(job_service, worker_id)
-        if not processed:
-            time.sleep(settings.collector_poll_seconds)
+        if processed:
+            continue
+        auto_job = job_service.maybe_enqueue_auto_replenish()
+        if auto_job:
+            logger.info(
+                "collector_auto_replenish_job id={} status={} reason={}",
+                auto_job.id,
+                auto_job.status,
+                job_service.get_job_payload(auto_job).get("reason"),
+            )
+            continue
+        time.sleep(settings.collector_poll_seconds)
 
 
 if __name__ == "__main__":

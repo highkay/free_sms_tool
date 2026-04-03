@@ -30,6 +30,15 @@ class DashboardStats:
 
 
 @dataclass(slots=True)
+class PoolInventory:
+    total_numbers: int
+    eligible_numbers: int
+    active_claim_count: int
+    enabled_provider_count: int
+    consumption_ratio: float
+
+
+@dataclass(slots=True)
 class ProviderRow:
     id: str
     name: str

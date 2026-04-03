@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 
 import pytest
+from bs4 import BeautifulSoup
 from fastapi.testclient import TestClient
 
 from app.config import get_settings
@@ -158,3 +159,52 @@ def test_web_ui_basic_auth_when_enabled(tmp_path, monkeypatch):
         token = base64.b64encode(b"operator:secret-pass").decode("ascii")
         authorized = client.get("/auth", headers={"Authorization": f"Basic {token}"})
         assert authorized.status_code == 200
+
+
+def test_base_layout_includes_usability_safety_styles(web_client):
+    client, _claim_token = web_client
+    response = client.get("/")
+
+    assert response.status_code == 200
+    for css_rule in [".badge {", ".stat-value {", ".ui-actions {", ".table :where(th, td) {"]:
+        assert css_rule in response.text
+
+
+@pytest.mark.parametrize(
+    "path_template",
+    [
+        "/",
+        "/numbers",
+        "/numbers/1",
+        "/claims",
+        "/apps",
+        "/apps/openai",
+        "/auth",
+    ],
+)
+def test_wide_data_pages_have_mobile_card_fallbacks(web_client, path_template: str):
+    client, claim_token = web_client
+    path = path_template.format(claim_token=claim_token)
+    response = client.get(path)
+
+    assert response.status_code == 200
+    assert "ui-mobile-cards" in response.text
+
+
+@pytest.mark.parametrize("path", ["/claims", "/providers"])
+def test_web_forms_do_not_render_nested_labels(web_client, path: str):
+    client, _claim_token = web_client
+    response = client.get(path)
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.text, "html.parser")
+    assert not soup.select("label label")
+
+
+def test_numbers_filters_stack_actions_on_mobile(web_client):
+    client, _claim_token = web_client
+    response = client.get("/numbers")
+
+    assert response.status_code == 200
+    assert 'class="flex flex-col justify-end gap-2 md:col-span-2 sm:flex-row xl:col-span-1"' in response.text
+    assert 'class="btn btn-ghost w-full sm:w-auto"' in response.text

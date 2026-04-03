@@ -143,3 +143,29 @@ def test_number_claim_and_complete_flow(client: TestClient):
 
     clear_resp = client.post(f"/api/numbers/{claim['number_id']}/blacklist/clear", headers=headers)
     assert clear_resp.status_code == 200
+
+
+def test_pick_triggers_auto_replenish_when_app_is_exhausted(client: TestClient):
+    headers = {"Authorization": "Bearer bootstrap-test-token"}
+
+    mark_used = client.post(
+        "/api/numbers/1/app-state",
+        headers=headers,
+        json={
+            "app_slug": "openai",
+            "app_name": "OpenAI",
+            "status": "used",
+            "notes": "exhausted by api smoke test",
+        },
+    )
+    assert mark_used.status_code == 200
+
+    pick_resp = client.post("/api/numbers/pick", headers=headers, json={"app_slug": "openai"})
+    assert pick_resp.status_code == 200
+    assert pick_resp.json() is None
+
+    jobs_resp = client.get("/api/jobs", headers=headers)
+    assert jobs_resp.status_code == 200
+    payload = jobs_resp.json()[0]
+    assert payload["provider_id"] is None
+    assert "auto_replenish_app_exhausted" in payload["payload_json"]
