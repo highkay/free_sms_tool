@@ -1,5 +1,7 @@
 # Free SMS Tool
 
+[中文说明](README.zh-CN.md)
+
 Evidence-first free SMS pool manager built with:
 
 - FastAPI
