@@ -313,3 +313,7 @@ docker compose down
 - auto-replenish reuses the same `sync_providers` job type, but with a higher per-provider discovery limit and deduped cooldown
 - provider fixture captures live under `tests/fixtures/providers`
 - fixture tests currently cover 9 provider surfaces: 5 full message parsers, `quackr` discovery-only, and 3 detail-only/stale-or-restricted providers (`jiemahao`, `freephonenum`, `receivesms_org`)
+
+## Friend Links
+
+- [Linux.do](https://linux.do/)

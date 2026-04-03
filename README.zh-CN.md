@@ -310,3 +310,7 @@ docker compose down
 - claim 会自动过期，并释放应用级的 `claimed` 状态
 - provider fixture 保存在 `tests/fixtures/providers`
 - 目前 fixture 测试覆盖 9 个 provider 表面：5 个完整 message parser、`quackr` 的 discovery-only，以及 3 个 detail-only / stale-or-restricted provider（`jiemahao`、`freephonenum`、`receivesms_org`）
+
+## 友情链接
+
+- [Linux.do](https://linux.do/)
