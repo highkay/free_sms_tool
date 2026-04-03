@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}来源站点 - Free SMS Tool{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between lg:p-8">
+      <div class="max-w-3xl">
+        <div class="badge badge-primary badge-outline">配置视图</div>
+        <h1 class="mt-3 text-3xl font-bold">来源站点</h1>
+        <p class="mt-2 text-base leading-7 text-base-content/70">
+          这里管理所有接码站点的启用状态、优先级、User-Agent、Headers、Cookies 和 Tokens，并可单独测试同步。
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button
+          class="btn btn-primary btn-sm"
+          hx-post="/sync/run"
+          hx-target="#provider-sync-result"
+          hx-swap="innerHTML"
+        >
+          同步全部启用站点
+        </button>
+      </div>
+    </div>
+    <div class="px-6 pb-6 lg:px-8" id="provider-sync-result"></div>
+  </section>
+
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="border-b border-base-300/70 px-6 py-5">
+      <h2 class="text-xl font-semibold">配置说明</h2>
+      <p class="mt-1 text-sm text-base-content/60">所有 headers / cookies / tokens 都使用 JSON object。没有值时请保持 `{}`。</p>
+    </div>
+    <div class="grid gap-4 p-6 text-sm text-base-content/70 md:grid-cols-3">
+      <div class="rounded-2xl bg-base-200/60 p-4">
+        <div class="font-medium text-base-content">基础设置</div>
+        <div class="mt-2">控制站点是否参与同步与分配，以及当前的请求身份。</div>
+      </div>
+      <div class="rounded-2xl bg-base-200/60 p-4">
+        <div class="font-medium text-base-content">认证信息</div>
+        <div class="mt-2">Cloudflare clearance、turnstile token 等都放在对应 JSON 框中。</div>
+      </div>
+      <div class="rounded-2xl bg-base-200/60 p-4">
+        <div class="font-medium text-base-content">验证反馈</div>
+        <div class="mt-2">展开每个站点都能看到最近一次验证时间、结果和错误摘要。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="space-y-4">
+    {% for provider in providers %}
+    <details class="rounded-3xl border border-base-300 bg-base-100 shadow-sm" {% if loop.first or provider.enabled %}open{% endif %}>
+      <summary class="cursor-pointer list-none p-6">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div class="space-y-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xl font-semibold">{{ provider.provider_name }}</h2>
+              <span class="badge badge-outline font-mono">{{ provider.provider_id }}</span>
+              {% if provider.enabled %}
+              <span class="badge badge-success">已启用</span>
+              {% else %}
+              <span class="badge badge-ghost">未启用</span>
+              {% endif %}
+            </div>
+            <div class="flex flex-wrap gap-2 text-sm text-base-content/70">
+              <span class="badge badge-outline">{{ provider.transport_mode }}</span>
+              <span class="badge badge-outline">{{ provider.discovery_mode }}/{{ provider.detail_mode }}</span>
+              <span class="badge badge-outline">认证 {{ provider.auth_mode }}</span>
+              <span class="badge badge-outline">优先级 {{ provider.priority }}</span>
+            </div>
+            <div class="text-xs text-base-content/60">
+              最近验证：{{ provider.last_verified_at or "-" }} · 结果：{{ provider.last_verify_status or "-" }} · 错误：{{ provider.last_verify_error or "-" }}
+            </div>
+          </div>
+          <div class="text-sm text-base-content/60">点击展开配置</div>
+        </div>
+      </summary>
+
+      <div class="border-t border-base-300/70 px-6 pb-6 pt-5">
+        <div class="mb-5 flex flex-wrap gap-2">
+          <a class="btn btn-sm btn-ghost" href="{{ provider.homepage_url }}" target="_blank" rel="noreferrer">打开站点</a>
+          <button
+            class="btn btn-sm btn-secondary"
+            hx-post="/sync/run?provider_id={{ provider.provider_id }}"
+            hx-target="#provider-sync-result"
+            hx-swap="innerHTML"
+          >
+            测试并同步当前站点
+          </button>
+        </div>
+
+        <form method="post" action="/providers/{{ provider.provider_id }}" class="space-y-6">
+          <section class="space-y-4">
+            <div>
+              <h3 class="text-lg font-semibold">基础设置</h3>
+              <p class="text-sm text-base-content/60">控制站点是否参与同步与分配，以及当前的请求身份。</p>
+            </div>
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <label class="form-control">
+                <span class="label-text">启用状态</span>
+                <label class="label cursor-pointer justify-start gap-3 rounded-2xl border border-base-300 px-4 py-3">
+                  <input class="checkbox" type="checkbox" name="enabled" {% if provider.enabled %}checked{% endif %}>
+                  <span class="label-text">参与同步与分配</span>
+                </label>
+              </label>
+              <label class="form-control">
+                <span class="label-text">优先级</span>
+                <input class="input input-bordered" type="number" name="priority" value="{{ provider.priority }}">
+              </label>
+              <label class="form-control xl:col-span-2">
+                <span class="label-text">User-Agent</span>
+                <input class="input input-bordered" type="text" name="user_agent" value="{{ provider.user_agent }}">
+              </label>
+              <label class="form-control md:col-span-2 xl:col-span-4">
+                <span class="label-text">备注</span>
+                <input class="input input-bordered" type="text" name="notes" value="{{ provider.notes }}">
+              </label>
+            </div>
+          </section>
+
+          <section class="space-y-4">
+            <div>
+              <h3 class="text-lg font-semibold">请求与认证 JSON</h3>
+              <p class="text-sm text-base-content/60">保持合法 JSON object；没有值时请使用 `{}`。</p>
+            </div>
+            <div class="grid gap-4 xl:grid-cols-3">
+              <label class="form-control">
+                <span class="label-text">Headers JSON</span>
+                <textarea class="textarea textarea-bordered h-44 font-mono text-xs" name="headers_json">{{ provider.headers_json }}</textarea>
+              </label>
+              <label class="form-control">
+                <span class="label-text">Cookies JSON</span>
+                <textarea class="textarea textarea-bordered h-44 font-mono text-xs" name="cookies_json">{{ provider.cookies_json }}</textarea>
+              </label>
+              <label class="form-control">
+                <span class="label-text">Tokens JSON</span>
+                <textarea class="textarea textarea-bordered h-44 font-mono text-xs" name="tokens_json">{{ provider.tokens_json }}</textarea>
+              </label>
+            </div>
+          </section>
+
+          <button class="btn btn-primary" type="submit">保存来源站点配置</button>
+        </form>
+      </div>
+    </details>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

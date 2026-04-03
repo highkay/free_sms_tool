@@ -1,0 +1,46 @@
+<div class="space-y-3">
+  {% if queued_job %}
+  <div class="rounded-2xl border border-primary/30 bg-primary/10 p-4">
+    <div class="space-y-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="font-semibold">同步任务已入队</div>
+        <span class="badge badge-primary">排队中</span>
+        <span class="badge badge-outline">Job #{{ queued_job.id }}</span>
+      </div>
+      <div class="text-sm text-base-content/80">
+        {% if queued_job.provider_id %}
+        已加入来源站点 <span class="font-mono">{{ queued_job.provider_id }}</span> 的同步任务。
+        {% else %}
+        已加入“全部启用来源站点”的同步任务。
+        {% endif %}
+      </div>
+      <div class="text-sm text-base-content/60">
+        现在由独立 collector 执行，不再阻塞当前 Web 请求。
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% for job in jobs %}
+  <div class="rounded-2xl border border-base-300 bg-base-100 p-4">
+    <div class="space-y-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="font-semibold">Job #{{ job.id }}</div>
+        <span class="badge {% if job.status == 'completed' %}badge-success{% elif job.status == 'failed' %}badge-error{% elif job.status == 'running' %}badge-secondary{% else %}badge-primary{% endif %}">
+          {{ job.status }}
+        </span>
+        <span class="badge badge-outline">{{ job.job_type }}</span>
+        {% if job.provider_id %}
+        <span class="badge badge-outline font-mono">{{ job.provider_id }}</span>
+        {% endif %}
+      </div>
+      <div class="text-sm text-base-content/70">
+        排队 {{ job.scheduled_at }}{% if job.started_at %} · 开始 {{ job.started_at }}{% endif %}{% if job.finished_at %} · 结束 {{ job.finished_at }}{% endif %}
+      </div>
+      {% if job.error_text %}
+      <div class="text-sm text-base-content/70">{{ job.error_text }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>

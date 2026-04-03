@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}认领记录 - Free SMS Tool{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between lg:p-8">
+      <div class="max-w-3xl">
+        <div class="badge badge-primary badge-outline">业务视图</div>
+        <h1 class="mt-3 text-3xl font-bold">认领记录</h1>
+        <p class="mt-2 text-base leading-7 text-base-content/70">
+          认领用于在短时间内独占一个号码，避免同一号码被多个流程同时占用，并且可以跟踪这个流程收到的最近短信。
+        </p>
+      </div>
+      <div class="stats border border-base-300 bg-base-100 shadow-sm">
+        <div class="stat py-4">
+          <div class="stat-title">记录总数</div>
+          <div class="stat-value text-primary">{{ claims|length }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid gap-6 xl:grid-cols-[1.4fr,1fr]">
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">创建认领</h2>
+        <p class="mt-1 text-sm text-base-content/60">为某个应用创建一个短时占用记录，并立即锁定一个号码。</p>
+      </div>
+      <div class="p-6">
+        <form method="post" action="/claims" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <label class="form-control">
+            <span class="label-text">应用标识</span>
+            <input class="input input-bordered" list="claim-app-slugs" type="text" name="app_slug" placeholder="例如 openai">
+          </label>
+          <label class="form-control">
+            <span class="label-text">应用名称</span>
+            <input class="input input-bordered" type="text" name="app_name" placeholder="例如 OpenAI">
+          </label>
+          <label class="form-control">
+            <span class="label-text">国家 / 地区</span>
+            <input class="input input-bordered" type="text" name="country_name" placeholder="例如 United States">
+          </label>
+          <label class="form-control">
+            <span class="label-text">来源站点</span>
+            <select class="select select-bordered" name="provider_id">
+              <option value="">全部来源站点</option>
+              {% for provider in providers %}
+              <option value="{{ provider.id }}">{{ provider.name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="form-control">
+            <span class="label-text">认领时长（分钟）</span>
+            <input class="input input-bordered" type="number" min="1" max="120" name="ttl_minutes" placeholder="10">
+          </label>
+          <label class="form-control">
+            <span class="label-text">放宽策略</span>
+            <label class="label cursor-pointer justify-start gap-3 rounded-2xl border border-base-300 px-4 py-3">
+              <input class="checkbox" type="checkbox" name="include_cooling">
+              <span class="label-text">允许分配降级号码</span>
+            </label>
+          </label>
+          <label class="form-control md:col-span-2 xl:col-span-3">
+            <span class="label-text">用途说明</span>
+            <input class="input input-bordered" type="text" name="purpose" placeholder="例如 OpenAI 注册验证码">
+          </label>
+          <button class="btn btn-primary md:col-span-2 xl:col-span-3 justify-self-start" type="submit">创建认领</button>
+        </form>
+        <datalist id="claim-app-slugs">
+          {% for app in apps %}
+          <option value="{{ app.slug }}">{{ app.name }}</option>
+          {% endfor %}
+        </datalist>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">使用建议</h2>
+      </div>
+      <div class="space-y-4 p-6 text-sm leading-7 text-base-content/70">
+        <div>
+          <div class="font-medium text-base-content">优先保持默认分配规则</div>
+          <div>除非确实没有更好的号，否则不要主动放宽到 cooling 号码。</div>
+        </div>
+        <div>
+          <div class="font-medium text-base-content">流程结束后立即回写结果</div>
+          <div>完成、阻塞、释放都应该尽快落库，避免重复占用同一个号码。</div>
+        </div>
+        <div>
+          <div class="font-medium text-base-content">明显失效的号码及时拉黑</div>
+          <div>如果一个号码长时间无新短信、或在目标站点稳定失败，应该回到号码详情页做全局处置。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-2 border-b border-base-300/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-xl font-semibold">认领列表</h2>
+        <p class="mt-1 text-sm text-base-content/60">点击认领令牌可查看最近短信和流转记录。</p>
+      </div>
+      <div class="text-sm text-base-content/60">最近 {{ claims|length }} 条</div>
+    </div>
+    <div class="overflow-x-auto px-2 py-2">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>认领令牌</th>
+            <th>应用</th>
+            <th>号码</th>
+            <th>状态</th>
+            <th>用途</th>
+            <th>过期时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for claim in claims %}
+          <tr>
+            <td class="font-mono text-xs">
+              <a class="link link-hover" href="/claims/{{ claim.claim_token }}">{{ claim.claim_token }}</a>
+            </td>
+            <td>
+              <div>{{ claim.app_name or "-" }}</div>
+              <div class="text-xs text-base-content/60">{{ claim.app_slug or "-" }}</div>
+            </td>
+            <td>
+              <a class="link link-hover font-mono" href="/numbers/{{ claim.number_id }}">{{ claim.e164 }}</a>
+              <div class="text-xs text-base-content/60">{{ claim.country_name or "-" }}</div>
+            </td>
+            <td>
+              <span class="badge {% if claim.status in ['watching', 'claimed'] %}badge-info{% elif claim.status == 'completed' %}badge-success{% elif claim.status == 'blocked' %}badge-warning{% else %}badge-ghost{% endif %}">
+                {{ claim.status }}
+              </span>
+            </td>
+            <td>{{ claim.purpose or "-" }}</td>
+            <td class="text-xs">{{ claim.expires_at }}</td>
+            <td>
+              <div class="flex flex-wrap gap-2">
+                <form method="post" action="/claims/{{ claim.claim_token }}/release">
+                  <input type="hidden" name="result" value="released from web">
+                  <button class="btn btn-xs btn-outline" type="submit">释放</button>
+                </form>
+                <form method="post" action="/claims/{{ claim.claim_token }}/complete">
+                  <input type="hidden" name="result" value="success from web">
+                  <input type="hidden" name="app_state" value="success">
+                  <button class="btn btn-xs btn-primary" type="submit">标记成功</button>
+                </form>
+                <form method="post" action="/claims/{{ claim.claim_token }}/complete">
+                  <input type="hidden" name="result" value="blocked from web">
+                  <input type="hidden" name="app_state" value="blocked">
+                  <button class="btn btn-xs btn-warning" type="submit">标记阻塞</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="py-8 text-center text-base-content/60">当前还没有认领记录。</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

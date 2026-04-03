@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}应用 - Free SMS Tool{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between lg:p-8">
+      <div class="max-w-3xl">
+        <div class="badge badge-primary badge-outline">业务视图</div>
+        <h1 class="mt-3 text-3xl font-bold">应用</h1>
+        <p class="mt-2 text-base leading-7 text-base-content/70">
+          应用用于隔离号码使用历史。比如同一个号码在 `openai` 已成功用过，就不应该再次分配给同一个应用。
+        </p>
+      </div>
+      <div class="stats border border-base-300 bg-base-100 shadow-sm">
+        <div class="stat py-4">
+          <div class="stat-title">应用数量</div>
+          <div class="stat-value text-primary">{{ apps|length }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid gap-6 xl:grid-cols-[1.25fr,1fr]">
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">新增或更新应用</h2>
+        <p class="mt-1 text-sm text-base-content/60">建议统一使用稳定的 slug，例如 openai、telegram、whatsapp。</p>
+      </div>
+      <div class="p-6">
+        <form method="post" action="/apps" class="grid gap-4 md:grid-cols-2">
+          <label class="form-control">
+            <span class="label-text">应用标识</span>
+            <input class="input input-bordered" type="text" name="slug" placeholder="例如 openai">
+          </label>
+          <label class="form-control">
+            <span class="label-text">应用名称</span>
+            <input class="input input-bordered" type="text" name="name" placeholder="例如 OpenAI">
+          </label>
+          <label class="form-control md:col-span-2">
+            <span class="label-text">备注</span>
+            <input class="input input-bordered" type="text" name="notes" placeholder="例如 注册流程 / 登录验证 / 备用站点">
+          </label>
+          <button class="btn btn-primary md:col-span-2 justify-self-start" type="submit">保存应用</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">命名建议</h2>
+      </div>
+      <div class="space-y-4 p-6 text-sm leading-7 text-base-content/70">
+        <div>
+          <div class="font-medium text-base-content">slug 保持稳定</div>
+          <div>用技术标识隔离历史，例如 `openai`，不要频繁改 slug。</div>
+        </div>
+        <div>
+          <div class="font-medium text-base-content">名称用于展示</div>
+          <div>应用名称面向页面展示，可写更友好的名称，例如 OpenAI、Telegram。</div>
+        </div>
+        <div>
+          <div class="font-medium text-base-content">备注写清使用场景</div>
+          <div>这样在详情页回看历史时，能快速判断这个应用的目标流程是什么。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-2 border-b border-base-300/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-xl font-semibold">应用列表</h2>
+        <p class="mt-1 text-sm text-base-content/60">点击应用可查看该应用下的号码使用情况。</p>
+      </div>
+      <div class="text-sm text-base-content/60">共 {{ apps|length }} 个应用</div>
+    </div>
+    <div class="overflow-x-auto px-2 py-2">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>应用标识</th>
+            <th>应用名称</th>
+            <th>号码数</th>
+            <th>已用数</th>
+            <th>阻塞数</th>
+            <th>活跃认领</th>
+            <th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in apps %}
+          <tr>
+            <td class="font-mono"><a class="link link-hover" href="/apps/{{ app.slug }}">{{ app.slug }}</a></td>
+            <td><a class="link link-hover font-medium" href="/apps/{{ app.slug }}">{{ app.name }}</a></td>
+            <td>{{ app.number_count }}</td>
+            <td>{{ app.used_count }}</td>
+            <td>{{ app.blocked_count }}</td>
+            <td>{{ app.active_claim_count }}</td>
+            <td class="text-sm text-base-content/70">{{ app.notes or "-" }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="py-8 text-center text-base-content/60">当前还没有应用标签。</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+[
+  {
+    "detail_url": "https://quackr.io/number/17759802006",
+    "discovery_url": "https://quackr.io/numbers.json",
+    "label": "us",
+    "number_key": "17759802006",
+    "country_name": "us",
+    "restricted": true,
+    "restricted_reason": "message_api_verification_required"
+  },
+  {
+    "detail_url": "https://quackr.io/number/17019976600",
+    "discovery_url": "https://quackr.io/numbers.json",
+    "label": "us",
+    "number_key": "17019976600",
+    "country_name": "us",
+    "restricted": true,
+    "restricted_reason": "message_api_verification_required"
+  },
+  {
+    "detail_url": "https://quackr.io/number/17759865200",
+    "discovery_url": "https://quackr.io/numbers.json",
+    "label": "us",
+    "number_key": "17759865200",
+    "country_name": "us",
+    "restricted": true,
+    "restricted_reason": "message_api_verification_required"
+  }
+]

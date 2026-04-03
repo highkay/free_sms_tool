@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}API 密钥 - Free SMS Tool{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between lg:p-8">
+      <div class="max-w-3xl">
+        <div class="badge badge-primary badge-outline">配置视图</div>
+        <h1 class="mt-3 text-3xl font-bold">API 密钥</h1>
+        <p class="mt-2 text-base leading-7 text-base-content/70">
+          所有 `/api/*` 接口都依赖 API 密钥认证。这里用于创建、查看和吊销密钥。新生成的密钥只会展示一次。
+        </p>
+      </div>
+      <a class="btn btn-sm btn-outline" href="/docs" target="_blank" rel="noreferrer">查看 API 文档</a>
+    </div>
+  </section>
+
+  {% if generated_token %}
+  <section class="rounded-3xl border border-success/20 bg-success/10 shadow-sm">
+    <div class="space-y-3 p-6">
+      <div class="font-semibold text-success">新的 API 密钥已生成，请立即保存。</div>
+      <code class="block break-all rounded-2xl bg-base-100 px-4 py-3 text-sm">{{ generated_token }}</code>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="grid gap-6 xl:grid-cols-[1.15fr,1fr]">
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">创建 API 密钥</h2>
+        <p class="mt-1 text-sm text-base-content/60">建议按用途创建，例如自动同步、外部集成、人工运维。</p>
+      </div>
+      <div class="p-6">
+        <form method="post" action="/auth/keys" class="grid gap-4 md:grid-cols-2">
+          <label class="form-control">
+            <span class="label-text">密钥名称</span>
+            <input class="input input-bordered" type="text" name="name" placeholder="例如 automation">
+          </label>
+          <label class="form-control">
+            <span class="label-text">备注</span>
+            <input class="input input-bordered" type="text" name="notes" placeholder="例如 CI / integration / manual admin">
+          </label>
+          <button class="btn btn-primary md:col-span-2 justify-self-start" type="submit">创建密钥</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">使用方式</h2>
+      </div>
+      <div class="space-y-4 p-6 text-sm leading-7 text-base-content/70">
+        <div>
+          <div class="font-medium text-base-content">HTTP Header</div>
+          <code class="mt-2 block rounded-2xl bg-base-200 px-4 py-3 text-xs">Authorization: Bearer &lt;api-key&gt;</code>
+        </div>
+        <div>
+          <div class="font-medium text-base-content">权限管理</div>
+          <div>吊销后的密钥不会再通过 API 鉴权，适合处理过期脚本或外部调用方更换凭证。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-2 border-b border-base-300/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-xl font-semibold">密钥列表</h2>
+        <p class="mt-1 text-sm text-base-content/60">列表不会暴露完整 token，只显示前缀和使用情况。</p>
+      </div>
+      <div class="text-sm text-base-content/60">共 {{ keys|length }} 个密钥</div>
+    </div>
+    <div class="overflow-x-auto px-2 py-2">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>前缀</th>
+            <th>角色</th>
+            <th>状态</th>
+            <th>创建时间</th>
+            <th>最近使用</th>
+            <th>备注</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for key in keys %}
+          <tr>
+            <td>{{ key.name }}</td>
+            <td class="font-mono">{{ key.token_prefix }}</td>
+            <td>{{ key.role }}</td>
+            <td>
+              {% if key.is_active %}
+              <span class="badge badge-success">启用中</span>
+              {% else %}
+              <span class="badge badge-ghost">已吊销</span>
+              {% endif %}
+            </td>
+            <td class="text-xs">{{ key.created_at }}</td>
+            <td class="text-xs">{{ key.last_used_at or "-" }}</td>
+            <td class="text-sm text-base-content/70">{{ key.notes or "-" }}</td>
+            <td>
+              <form method="post" action="/auth/keys/{{ key.id }}/revoke">
+                <button class="btn btn-xs btn-outline" type="submit" {% if not key.is_active %}disabled{% endif %}>吊销</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="py-8 text-center text-base-content/60">当前还没有 API 密钥。</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

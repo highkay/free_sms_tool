@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="corporate">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Free SMS Tool{% endblock %}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.24/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background-image:
+          radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 24rem),
+          radial-gradient(circle at top right, rgba(14, 165, 233, 0.06), transparent 20rem);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-base-200 text-base-content">
+    {% set path = request.url.path %}
+    <div class="min-h-screen">
+      <header class="sticky top-0 z-40 border-b border-base-300/70 bg-base-100/90 backdrop-blur">
+        <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
+          <div class="flex flex-1 items-center gap-3">
+            <div class="dropdown lg:hidden">
+              <div tabindex="0" role="button" class="btn btn-ghost btn-square">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </div>
+              <ul tabindex="0" class="menu dropdown-content z-[1] mt-3 w-56 rounded-box border border-base-300 bg-base-100 p-2 shadow-xl">
+                <li><a href="/" {% if path == "/" %}class="active"{% endif %}>总览</a></li>
+                <li><a href="/numbers" {% if path == "/numbers" or path.startswith("/numbers/") %}class="active"{% endif %}>号码池</a></li>
+                <li><a href="/claims" {% if path == "/claims" or path.startswith("/claims/") %}class="active"{% endif %}>认领记录</a></li>
+                <li><a href="/apps" {% if path == "/apps" or path.startswith("/apps/") %}class="active"{% endif %}>应用</a></li>
+                <li><a href="/providers" {% if path == "/providers" or path.startswith("/providers/") %}class="active"{% endif %}>来源站点</a></li>
+                <li><a href="/auth" {% if path == "/auth" or path.startswith("/auth/") %}class="active"{% endif %}>API 密钥</a></li>
+                <li><a href="/docs" target="_blank" rel="noreferrer">API 文档</a></li>
+              </ul>
+            </div>
+
+            <a class="flex items-center gap-3" href="/">
+              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <span class="text-lg font-bold">SMS</span>
+              </div>
+              <div>
+                <div class="text-lg font-semibold leading-tight">Free SMS Tool</div>
+                <div class="hidden text-sm text-base-content/60 sm:block">免费号码池与短信证据管理台</div>
+              </div>
+            </a>
+          </div>
+
+          <nav class="hidden items-center gap-2 lg:flex">
+            <a class="btn btn-sm {% if path == '/' %}btn-primary{% else %}btn-ghost{% endif %}" href="/">总览</a>
+            <a class="btn btn-sm {% if path == '/numbers' or path.startswith('/numbers/') %}btn-primary{% else %}btn-ghost{% endif %}" href="/numbers">号码池</a>
+            <a class="btn btn-sm {% if path == '/claims' or path.startswith('/claims/') %}btn-primary{% else %}btn-ghost{% endif %}" href="/claims">认领记录</a>
+            <a class="btn btn-sm {% if path == '/apps' or path.startswith('/apps/') %}btn-primary{% else %}btn-ghost{% endif %}" href="/apps">应用</a>
+            <a class="btn btn-sm {% if path == '/providers' or path.startswith('/providers/') %}btn-primary{% else %}btn-ghost{% endif %}" href="/providers">来源站点</a>
+            <a class="btn btn-sm {% if path == '/auth' or path.startswith('/auth/') %}btn-primary{% else %}btn-ghost{% endif %}" href="/auth">API 密钥</a>
+          </nav>
+
+          <div class="hidden sm:block">
+            <a class="btn btn-sm btn-outline" href="/docs" target="_blank" rel="noreferrer">API 文档</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 lg:py-8">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </body>
+</html>

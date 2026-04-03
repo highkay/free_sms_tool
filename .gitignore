@@ -1,0 +1,17 @@
+.ace-tool/
+.env
+.env.*
+!.env.example
+!.env.test.example
+.pytest_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+logs/
+data/*.db
+data/*.db-shm
+data/*.db-wal

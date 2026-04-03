@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}应用详情 - Free SMS Tool{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between lg:p-8">
+      <div class="max-w-3xl space-y-3">
+        <div class="badge badge-primary badge-outline">应用详情</div>
+        <div>
+          <h1 class="text-3xl font-bold">{{ app.name }}</h1>
+          <p class="mt-2 text-base-content/70">应用标识：<span class="font-mono">{{ app.slug }}</span></p>
+          <p class="text-sm text-base-content/60">{{ app.notes or "暂无备注" }}</p>
+        </div>
+      </div>
+      <a class="btn btn-sm btn-ghost" href="/apps">返回应用列表</a>
+    </div>
+  </section>
+
+  <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">关联号码</div>
+      <div class="stat-value text-primary">{{ app.number_count }}</div>
+    </div>
+    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">已用号码</div>
+      <div class="stat-value text-success">{{ app.used_count }}</div>
+    </div>
+    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">阻塞号码</div>
+      <div class="stat-value text-warning">{{ app.blocked_count }}</div>
+    </div>
+    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">活跃认领</div>
+      <div class="stat-value text-secondary">{{ app.active_claim_count }}</div>
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-2 border-b border-base-300/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-xl font-semibold">号码使用记录</h2>
+        <p class="mt-1 text-sm text-base-content/60">查看该应用在各个号码上的使用状态与最近结果。</p>
+      </div>
+      <div class="text-sm text-base-content/60">共 {{ number_usage|length }} 条记录</div>
+    </div>
+    <div class="overflow-x-auto px-2 py-2">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>号码</th>
+            <th>国家 / 地区</th>
+            <th>应用状态</th>
+            <th>全局状态</th>
+            <th>活跃层级</th>
+            <th>最近短信年龄</th>
+            <th>使用次数</th>
+            <th>最近结果</th>
+            <th>最近认领</th>
+            <th>最近使用</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in number_usage %}
+          <tr>
+            <td class="font-mono"><a class="link link-hover" href="/numbers/{{ row.number_id }}">{{ row.e164 }}</a></td>
+            <td>{{ row.country_name or "-" }}</td>
+            <td><span class="badge">{{ row.app_status }}</span></td>
+            <td><span class="badge badge-outline">{{ row.number_status }}</span></td>
+            <td>
+              <span class="badge {% if row.freshness_bucket == 'hot' %}badge-success{% elif row.freshness_bucket == 'warm' %}badge-info{% elif row.freshness_bucket == 'cooling' %}badge-warning{% else %}badge-ghost{% endif %}">
+                {{ row.freshness_bucket or "-" }}
+              </span>
+            </td>
+            <td>{{ row.last_message_age_min if row.last_message_age_min is not none else "-" }}{% if row.last_message_age_min is not none %} 分钟{% endif %}</td>
+            <td>{{ row.use_count }}</td>
+            <td>{{ row.last_result or "-" }}</td>
+            <td class="text-xs">{{ row.last_claimed_at or "-" }}</td>
+            <td class="text-xs">{{ row.last_used_at or "-" }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="10" class="py-8 text-center text-base-content/60">当前这个应用还没有号码状态记录。</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}号码池 - Free SMS Tool{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between lg:p-8">
+      <div class="max-w-3xl">
+        <div class="badge badge-primary badge-outline">业务视图</div>
+        <h1 class="mt-3 text-3xl font-bold">号码池</h1>
+        <p class="mt-2 text-base leading-7 text-base-content/70">
+          这里展示当前可用号码及其活跃度证据。默认只应优先分配最近 3 小时内仍有新短信的号码。
+        </p>
+      </div>
+      <div class="stats stats-vertical border border-base-300 bg-base-100 shadow-sm sm:stats-horizontal">
+        <div class="stat py-4">
+          <div class="stat-title">当前结果</div>
+          <div class="stat-value text-primary">{{ numbers|length }}</div>
+        </div>
+        <div class="stat py-4">
+          <div class="stat-title">筛选应用</div>
+          <div class="stat-value text-lg">{{ filters.app_slug or "全部" }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid gap-6 xl:grid-cols-[1.35fr,1fr]">
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">筛选条件</h2>
+        <p class="mt-1 text-sm text-base-content/60">按国家、来源站点或应用隔离历史来缩小号码范围。</p>
+      </div>
+      <div class="p-6">
+        <form class="grid gap-3 md:grid-cols-2 xl:grid-cols-4" method="get" action="/numbers">
+          <label class="form-control">
+            <span class="label-text">国家 / 地区</span>
+            <input class="input input-bordered" type="text" name="country_name" placeholder="例如 United States" value="{{ filters.country_name or '' }}">
+          </label>
+          <label class="form-control">
+            <span class="label-text">来源站点</span>
+            <select class="select select-bordered" name="provider_id">
+              <option value="">全部来源站点</option>
+              {% for provider in providers %}
+              <option value="{{ provider.id }}" {% if filters.provider_id == provider.id %}selected{% endif %}>{{ provider.name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="form-control">
+            <span class="label-text">应用标识</span>
+            <input class="input input-bordered" list="app-slugs" type="text" name="app_slug" placeholder="例如 openai" value="{{ filters.app_slug or '' }}">
+          </label>
+          <div class="flex items-end gap-2">
+            <button class="btn btn-primary w-full" type="submit">应用筛选</button>
+            <a class="btn btn-ghost" href="/numbers">重置</a>
+          </div>
+        </form>
+        <datalist id="app-slugs">
+          {% for app in apps %}
+          <option value="{{ app.slug }}">{{ app.name }}</option>
+          {% endfor %}
+        </datalist>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">快速分配</h2>
+        <p class="mt-1 text-sm text-base-content/60">基于当前筛选条件，立即挑一个符合规则的号码。</p>
+      </div>
+      <div class="space-y-4 p-6">
+        <div class="rounded-2xl bg-base-200/60 p-4 text-sm leading-7 text-base-content/70">
+          <div>默认规则：</div>
+          <ul class="ml-5 list-disc">
+            <li>优先最近 3 小时仍活跃的号码</li>
+            <li>排除全局黑名单号码</li>
+            <li>排除当前应用已用或已阻塞的号码</li>
+          </ul>
+        </div>
+        <button
+          class="btn btn-secondary"
+          hx-get="/numbers/pick?country_name={{ filters.country_name or '' }}&provider_id={{ filters.provider_id or '' }}&app_slug={{ filters.app_slug or '' }}"
+          hx-target="#selection-result"
+          hx-swap="innerHTML"
+        >
+          挑选一个可用号码
+        </button>
+        <div id="selection-result"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-2 border-b border-base-300/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-xl font-semibold">号码列表</h2>
+        <p class="mt-1 text-sm text-base-content/60">点击号码可查看来源证据、应用状态和最近短信。</p>
+      </div>
+      <div class="text-sm text-base-content/60">当前共 {{ numbers|length }} 条结果</div>
+    </div>
+    <div class="overflow-x-auto px-2 py-2">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>号码</th>
+            <th>国家 / 地区</th>
+            <th>状态</th>
+            <th>活跃层级</th>
+            <th>最近短信年龄</th>
+            <th>活跃分</th>
+            <th>来源站点</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for number in numbers %}
+          <tr>
+            <td>
+              <a class="link link-hover font-mono text-base font-medium" href="/numbers/{{ number.id }}">{{ number.e164 }}</a>
+            </td>
+            <td>{{ number.country_name or '-' }}</td>
+            <td>
+              <div class="flex flex-wrap gap-2">
+                <span class="badge {% if number.status == 'active' %}badge-success{% elif number.status == 'blacklisted' %}badge-error{% else %}badge-ghost{% endif %}">{{ number.status }}</span>
+                {% if number.blacklist_reason %}
+                <span class="badge badge-error badge-outline">全局黑名单</span>
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              <span class="badge {% if number.freshness_bucket == 'hot' %}badge-success{% elif number.freshness_bucket == 'warm' %}badge-info{% elif number.freshness_bucket == 'cooling' %}badge-warning{% else %}badge-ghost{% endif %}">
+                {{ number.freshness_bucket or '-' }}
+              </span>
+            </td>
+            <td>{{ number.last_message_age_min if number.last_message_age_min is not none else '-' }}{% if number.last_message_age_min is not none %} 分钟{% endif %}</td>
+            <td>{{ "%.1f"|format(number.activity_score) }}</td>
+            <td class="text-sm text-base-content/70">{{ number.providers or '-' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="py-10 text-center text-base-content/60">
+              当前还没有导入号码数据，请先到“来源站点”页面完成配置并执行同步。
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

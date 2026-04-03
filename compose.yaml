@@ -1,0 +1,84 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${APP_NAME:-Free SMS Tool}
+      DEBUG: ${DEBUG:-0}
+      HOST: 0.0.0.0
+      PORT: 8000
+      DATABASE_PATH: ${DATABASE_PATH:-data/free_sms_tool.db}
+      FLARESOLVERR_URL: http://flaresolverr:8191/v1
+      FRESHNESS_HOT_MAX: ${FRESHNESS_HOT_MAX:-60}
+      FRESHNESS_WARM_MAX: ${FRESHNESS_WARM_MAX:-180}
+      FRESHNESS_COOLING_MAX: ${FRESHNESS_COOLING_MAX:-360}
+      SYNC_LIMIT_PER_PROVIDER: ${SYNC_LIMIT_PER_PROVIDER:-10}
+      MESSAGE_LIMIT_PER_NUMBER: ${MESSAGE_LIMIT_PER_NUMBER:-20}
+      DEFAULT_CLAIM_TTL_MINUTES: ${DEFAULT_CLAIM_TTL_MINUTES:-10}
+      BOOTSTRAP_API_KEY: ${BOOTSTRAP_API_KEY:-change-me-before-production}
+      BOOTSTRAP_API_KEY_NAME: ${BOOTSTRAP_API_KEY_NAME:-bootstrap}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_PATH: ${LOG_PATH:-logs/free_sms_tool.log}
+      LOG_JSON: ${LOG_JSON:-0}
+      COLLECTOR_POLL_SECONDS: ${COLLECTOR_POLL_SECONDS:-5}
+      WEB_UI_USERNAME: ${WEB_UI_USERNAME:-}
+      WEB_UI_PASSWORD: ${WEB_UI_PASSWORD:-}
+    ports:
+      - "${HOST_PORT:-18000}:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - flaresolverr
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=5).read()",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  collector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ["python", "-m", "app.collector.main"]
+    environment:
+      APP_NAME: ${APP_NAME:-Free SMS Tool}
+      DEBUG: ${DEBUG:-0}
+      HOST: 0.0.0.0
+      PORT: 8000
+      DATABASE_PATH: ${DATABASE_PATH:-data/free_sms_tool.db}
+      FLARESOLVERR_URL: http://flaresolverr:8191/v1
+      FRESHNESS_HOT_MAX: ${FRESHNESS_HOT_MAX:-60}
+      FRESHNESS_WARM_MAX: ${FRESHNESS_WARM_MAX:-180}
+      FRESHNESS_COOLING_MAX: ${FRESHNESS_COOLING_MAX:-360}
+      SYNC_LIMIT_PER_PROVIDER: ${SYNC_LIMIT_PER_PROVIDER:-10}
+      MESSAGE_LIMIT_PER_NUMBER: ${MESSAGE_LIMIT_PER_NUMBER:-20}
+      DEFAULT_CLAIM_TTL_MINUTES: ${DEFAULT_CLAIM_TTL_MINUTES:-10}
+      BOOTSTRAP_API_KEY: ${BOOTSTRAP_API_KEY:-change-me-before-production}
+      BOOTSTRAP_API_KEY_NAME: ${BOOTSTRAP_API_KEY_NAME:-bootstrap}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_PATH: ${LOG_PATH:-logs/free_sms_tool.log}
+      LOG_JSON: ${LOG_JSON:-0}
+      COLLECTOR_POLL_SECONDS: ${COLLECTOR_POLL_SECONDS:-5}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - flaresolverr
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: ${FLARESOLVERR_LOG_LEVEL:-info}
+      LOG_HTML: ${FLARESOLVERR_LOG_HTML:-false}

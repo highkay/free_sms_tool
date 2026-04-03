@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}号码详情 - Free SMS Tool{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-col gap-4 p-6 lg:flex-row lg:items-start lg:justify-between lg:p-8">
+      <div class="max-w-4xl space-y-3">
+        <div class="badge badge-primary badge-outline">号码详情</div>
+        <div>
+          <h1 class="font-mono text-3xl font-bold">{{ number.e164 }}</h1>
+          <p class="mt-2 text-base leading-7 text-base-content/70">
+            {{ number.country_name or "-" }} · 全局状态 {{ number.status }} · 活跃层级 {{ number.freshness_bucket or "-" }} · 最近短信年龄 {{ number.last_message_age_min if number.last_message_age_min is not none else "-" }}{% if number.last_message_age_min is not none %} 分钟{% endif %}
+          </p>
+        </div>
+      </div>
+      <a class="btn btn-sm btn-ghost" href="/numbers">返回号码池</a>
+    </div>
+  </section>
+
+  <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">全局状态</div>
+      <div class="stat-value text-lg">{{ number.status }}</div>
+      <div class="stat-desc">最近选择 {{ number.last_selected_at or "-" }}</div>
+    </div>
+    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">活跃层级</div>
+      <div class="stat-value text-lg">{{ number.freshness_bucket or "-" }}</div>
+      <div class="stat-desc">最近短信越新越优先</div>
+    </div>
+    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">最近短信年龄</div>
+      <div class="stat-value text-lg">{{ number.last_message_age_min if number.last_message_age_min is not none else "-" }}</div>
+      <div class="stat-desc">{% if number.last_message_age_min is not none %}单位：分钟{% else %}暂无数据{% endif %}</div>
+    </div>
+    <div class="stat rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="stat-title">活跃分</div>
+      <div class="stat-value text-lg">{{ "%.1f"|format(number.activity_score) }}</div>
+      <div class="stat-desc">综合最近短信活跃度</div>
+    </div>
+  </section>
+
+  {% if number.blacklist_reason %}
+  <section class="alert alert-error rounded-3xl shadow-sm">
+    <span>当前号码已进入全局黑名单：{{ number.blacklist_reason }}</span>
+  </section>
+  {% endif %}
+
+  <section class="grid gap-6 xl:grid-cols-2">
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">全局处置</h2>
+        <p class="mt-1 text-sm text-base-content/60">这里的黑名单会直接影响默认选号结果。</p>
+      </div>
+      <div class="space-y-4 p-6">
+        <form method="post" action="/numbers/{{ number.id }}/blacklist" class="space-y-3">
+          <label class="form-control">
+            <span class="label-text">黑名单原因</span>
+            <textarea class="textarea textarea-bordered w-full" name="reason" rows="4" placeholder="例如：被目标站封禁、短信失真、号码长期无新消息">{{ number.blacklist_reason or '' }}</textarea>
+          </label>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-error" type="submit">保存为全局黑名单</button>
+          </div>
+        </form>
+        <form method="post" action="/numbers/{{ number.id }}/blacklist/clear">
+          <button class="btn btn-outline" type="submit" {% if not number.blacklist_reason %}disabled{% endif %}>清除全局黑名单</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">应用级标记</h2>
+        <p class="mt-1 text-sm text-base-content/60">为某个应用记录该号码的已用、成功、阻塞或忽略状态。</p>
+      </div>
+      <div class="p-6">
+        <form method="post" action="/numbers/{{ number.id }}/app-state" class="space-y-4">
+          <div class="grid gap-4 md:grid-cols-2">
+            <label class="form-control">
+              <span class="label-text">应用标识</span>
+              <input class="input input-bordered" list="detail-app-slugs" type="text" name="app_slug" placeholder="例如 openai">
+            </label>
+            <label class="form-control">
+              <span class="label-text">应用名称</span>
+              <input class="input input-bordered" type="text" name="app_name" placeholder="例如 OpenAI">
+            </label>
+          </div>
+          <datalist id="detail-app-slugs">
+            {% for app in apps %}
+            <option value="{{ app.slug }}">{{ app.name }}</option>
+            {% endfor %}
+          </datalist>
+          <label class="form-control">
+            <span class="label-text">状态</span>
+            <select class="select select-bordered" name="status">
+              {% for status in app_state_statuses %}
+              <option value="{{ status }}">{{ status }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="form-control">
+            <span class="label-text">结果 / 备注</span>
+            <input class="input input-bordered" type="text" name="notes" placeholder="例如：已注册成功 / 验证码迟迟不到 / 被目标站拦截">
+          </label>
+          <button class="btn btn-primary" type="submit">保存应用状态</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid gap-6 xl:grid-cols-2">
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">来源证据</h2>
+        <p class="mt-1 text-sm text-base-content/60">每个来源站点对这个号码的当前可见状态和最近短信年龄。</p>
+      </div>
+      <div class="overflow-x-auto px-2 py-2">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>来源站点</th>
+              <th>状态</th>
+              <th>是否受限</th>
+              <th>最近短信年龄</th>
+              <th>最近检查</th>
+              <th>国家标签</th>
+              <th>详情页</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for source in sources %}
+            <tr>
+              <td>{{ source.provider_name }}</td>
+              <td><span class="badge badge-outline">{{ source.source_status }}</span></td>
+              <td>
+                {% if source.restricted %}
+                <div class="space-y-1">
+                  <span class="badge badge-warning">受限</span>
+                  <div class="text-xs text-base-content/60">{{ source.restricted_reason or "-" }}</div>
+                </div>
+                {% else %}
+                <span class="badge badge-success badge-outline">可见</span>
+                {% endif %}
+              </td>
+              <td>{{ source.last_real_message_age_min if source.last_real_message_age_min is not none else "-" }}{% if source.last_real_message_age_min is not none %} 分钟{% endif %}</td>
+              <td class="text-xs">{{ source.last_checked_at or "-" }}</td>
+              <td>{{ source.provider_country_label or "-" }}</td>
+              <td><a class="link link-hover text-xs" href="{{ source.detail_url }}" target="_blank" rel="noreferrer">打开</a></td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="py-6 text-center text-base-content/60">当前还没有来源级证据。</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+      <div class="border-b border-base-300/70 px-6 py-5">
+        <h2 class="text-xl font-semibold">应用使用记录</h2>
+        <p class="mt-1 text-sm text-base-content/60">这个号码在不同应用下的使用状态、结果和时间线。</p>
+      </div>
+      <div class="overflow-x-auto px-2 py-2">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>应用</th>
+              <th>状态</th>
+              <th>使用次数</th>
+              <th>最近认领</th>
+              <th>最近使用</th>
+              <th>最近结果</th>
+              <th>备注</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for state in app_states %}
+            <tr>
+              <td>
+                <div>{{ state.app_name }}</div>
+                <div class="text-xs text-base-content/60">{{ state.app_slug }}</div>
+              </td>
+              <td><span class="badge">{{ state.status }}</span></td>
+              <td>{{ state.use_count }}</td>
+              <td class="text-xs">{{ state.last_claimed_at or "-" }}</td>
+              <td class="text-xs">{{ state.last_used_at or "-" }}</td>
+              <td>{{ state.last_result or "-" }}</td>
+              <td>{{ state.notes or "-" }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="py-6 text-center text-base-content/60">当前还没有应用级状态。</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+    <div class="border-b border-base-300/70 px-6 py-5">
+      <h2 class="text-xl font-semibold">最近短信</h2>
+      <p class="mt-1 text-sm text-base-content/60">优先查看最近几条短信是否仍在持续刷新，判断这个号码是否仍可用。</p>
+    </div>
+    <div class="space-y-4 p-6">
+      {% for message in messages %}
+      <article class="rounded-2xl border border-base-300 bg-base-100 p-4">
+        <div class="mb-2 flex flex-wrap gap-3 text-sm text-base-content/70">
+          <span class="badge badge-outline">{{ message.provider_name }}</span>
+          <span>{{ message.sender or "-" }}</span>
+          <span>{{ message.received_at or "-" }}</span>
+          {% if message.otp_code %}
+          <span class="badge badge-primary">验证码 {{ message.otp_code }}</span>
+          {% endif %}
+        </div>
+        <div class="whitespace-pre-wrap break-words leading-7">{{ message.body }}</div>
+      </article>
+      {% else %}
+      <div class="rounded-2xl bg-base-200/60 p-4 text-base-content/60">当前还没有入库短信。</div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
